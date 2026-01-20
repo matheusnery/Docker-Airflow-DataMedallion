@@ -107,7 +107,7 @@ plugins/                            (Plugins Airflow customizados)
 Resumo rápido
 - Orquestração: Airflow (webserver + scheduler) via `docker-compose`.
 - Pipeline: `medallion_pipeline` (tasks: bronze_task, silver_task, dq_check_task, gold_task).
-- Scripts: implementações extraídas para `airflow_home/dags/scripts/` — `bronze.py`,
+- Scripts: implementações extraídas para `airflow_home/dags/scripts/` - `bronze.py`,
   `silver.py`, `gold.py`, `logging.py`, `dq.py`, `alert.py`.
 - Logging: eventos de execução e métricas DQ escritos como JSON em
   `/opt/airflow/data/logging` (um arquivo JSON por evento).
@@ -116,17 +116,17 @@ Resumo rápido
   `docker-compose`.
 
 Arquivos principais criados/alterados
-- `airflow_home/dags/medallion_pipeline_dag.py` — DAG que delega lógica aos scripts.
-- `airflow_home/dags/scripts/bronze.py` — fetch e gravação Bronze (JSON).
-- `airflow_home/dags/scripts/silver.py` — transformação Silver (Parquet particionado).
-- `airflow_home/dags/scripts/gold.py` — agregação Gold e tentativa de escrita Delta.
-- `airflow_home/dags/scripts/logging.py` — helper para gravar eventos JSON em
+- `airflow_home/dags/medallion_pipeline_dag.py` - DAG que delega lógica aos scripts.
+- `airflow_home/dags/scripts/bronze.py` - fetch e gravação Bronze (JSON).
+- `airflow_home/dags/scripts/silver.py` - transformação Silver (Parquet particionado).
+- `airflow_home/dags/scripts/gold.py` - agregação Gold e tentativa de escrita Delta.
+- `airflow_home/dags/scripts/logging.py` - helper para gravar eventos JSON em
   `/opt/airflow/data/logging`.
-- `airflow_home/dags/scripts/dq.py` — avaliador de regras de qualidade e gerador
+- `airflow_home/dags/scripts/dq.py` - avaliador de regras de qualidade e gerador
   de alertas.
-- `airflow_home/dags/scripts/alert.py` — helper de envio de e‑mail (Airflow + SMTP
+- `airflow_home/dags/scripts/alert.py` - helper de envio de e‑mail (Airflow + SMTP
   fallback).
-- `docker-compose.yml` — adicionado serviço `mailhog` e variáveis SMTP de exemplo.
+- `docker-compose.yml` - adicionado serviço `mailhog` e variáveis SMTP de exemplo.
 
 Como rodar (modo rápido)
 1. Subir os containers:
@@ -164,7 +164,7 @@ docker-compose run --rm airflow-webserver airflow tasks test medallion_pipeline 
 ```
 
 Observação: ao usar `airflow tasks test` na task `dq_check_task` sem fornecer
-`silver_path`, o checker pode não localizar o log correto — o fluxo end‑to‑end
+`silver_path`, o checker pode não localizar o log correto, o fluxo end‑to‑end
 (bronze → silver → dq_check) em uma mesma execução é a forma mais realista de
 testar.
 
