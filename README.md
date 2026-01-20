@@ -1,4 +1,4 @@
-# Airflow local pipeline (medallion) — instruções e novidades
+# Airflow local pipeline (medallion)
 
 Este repositório contém uma instância local do Apache Airflow em Docker com uma
 pipeline Medallion (Bronze → Silver → Gold).
