@@ -1,0 +1,31 @@
+name: CI — Airflow Docker Compose
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  airflow-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Start Airflow with Docker Compose
+        run: |
+          docker compose up -d
+
+      - name: Wait for Airflow to be ready
+        run: sleep 30
+
+      - name: Check running containers
+        run: docker ps
+
+      - name: Tear down environment
+        run: docker compose down --volumes
