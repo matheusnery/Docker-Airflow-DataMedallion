@@ -1,0 +1,51 @@
+name: CI — Airflow Docker Compose
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  airflow-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Faz checkout do código
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2) Configura Docker e Docker Compose
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Set up Docker Compose
+        uses: docker/setup-compose-action@v3
+
+      # 3) Inicia o stack do Airflow
+      - name: Start Airflow (Docker Compose)
+        run: |
+          docker compose up -d
+
+      # 4) Aguarda containers ficarem prontos
+      - name: Wait for Airflow services
+        run: |
+          sleep 20
+
+      # 5) (Opcional) Trigger Airflow DAG
+      - name: Trigger example DAG
+        run: |
+          docker exec -it $(docker ps -qf "name=airflow_webserver") \
+            airflow dags trigger medallion_pipeline
+
+      # 6) (Opcional) Validar status de containers
+      - name: Check containers health
+        run: |
+          docker ps
+
+      # 7) Para e remove containers
+      - name: Tear down
+        run: |
+          docker compose down --volumes
