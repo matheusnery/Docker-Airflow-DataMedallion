@@ -1,0 +1,45 @@
+# Git
+.git
+.gitignore
+.gitkeep
+
+# Documentation
+*.md
+docs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv
+*.egg-info/
+
+# Airflow
+airflow.db
+airflow.cfg
+logs/
+*.log
+
+# Data
+data/
+bronze/
+silver/
+gold/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Scripts
+scripts/

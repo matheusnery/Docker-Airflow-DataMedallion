@@ -1,0 +1,9 @@
+# Apache Airflow
+apache-airflow==2.8.0
+
+# Python utilities
+python-dotenv==1.0.0
+requests==2.31.0
+pandas==2.2.3
+pyarrow==12.0.1
+deltalake==0.9.0
