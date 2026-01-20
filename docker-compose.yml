@@ -1,0 +1,88 @@
+services:
+  # Serviço do Airflow Webserver (Interface Web)
+  airflow-webserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: webserver
+    volumes:
+      - ./airflow_home:/opt/airflow  # Persist Airflow home (DB, config, dags, logs, data)
+    ports:
+      - "8080:8080"  # Porta do webserver
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=true
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__API__AUTH_BACKENDS=airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+      - AIRFLOW__CORE__FERNET_KEY=SuH-tgmgvu0-H3j53QnqO7nFNNV17zS071JMxaAWu3U=
+      - AIRFLOW__CORE__DAGBAG_IMPORT_TIMEOUT=1000
+      - AIRFLOW__CORE__DAG_FILE_PROCESSOR_TIMEOUT=1000
+      # SMTP settings for alerts (Ethereal Email - Testing)
+      - AIRFLOW__SMTP__SMTP_HOST=smtp.ethereal.email
+      - AIRFLOW__SMTP__SMTP_PORT=587
+      - AIRFLOW__SMTP__SMTP_MAIL_FROM=bernie.kunze24@ethereal.email
+      - AIRFLOW__SMTP__SMTP_USER=bernie.kunze24@ethereal.email
+      - AIRFLOW__SMTP__SMTP_PASSWORD=jBRt3RYA1VDkev44wf
+      - AIRFLOW__SMTP__SMTP_STARTTLS=True
+      - AIRFLOW__SMTP__SMTP_SSL=False
+      # Fallback/alert env variables used by scripts/alert.py
+      - ALERT_SMTP_HOST=smtp.ethereal.email
+      - ALERT_SMTP_PORT=587
+      - ALERT_SMTP_FROM=bernie.kunze24@ethereal.email
+      - ALERT_SMTP_USE_TLS=True
+      - ALERT_SMTP_USER=bernie.kunze24@ethereal.email
+      - ALERT_SMTP_PASSWORD=jBRt3RYA1VDkev44wf
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+  # Serviço do Airflow Scheduler (Agendador de tarefas)
+  airflow-scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: scheduler
+    volumes:
+      - ./airflow_home:/opt/airflow  # Persist Airflow home (DB, config, dags, logs, data)
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=true
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__API__AUTH_BACKENDS=airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+      - AIRFLOW__CORE__FERNET_KEY=SuH-tgmgvu0-H3j53QnqO7nFNNV17zS071JMxaAWu3U=
+      - AIRFLOW__CORE__DAGBAG_IMPORT_TIMEOUT=1000
+      - AIRFLOW__CORE__DAG_FILE_PROCESSOR_TIMEOUT=1000
+      # SMTP settings for alerts (Ethereal Email - Testing)
+      - AIRFLOW__SMTP__SMTP_HOST=smtp.ethereal.email
+      - AIRFLOW__SMTP__SMTP_PORT=587
+      - AIRFLOW__SMTP__SMTP_MAIL_FROM=bernie.kunze24@ethereal.email
+      - AIRFLOW__SMTP__SMTP_USER=bernie.kunze24@ethereal.email
+      - AIRFLOW__SMTP__SMTP_PASSWORD=jBRt3RYA1VDkev44wf
+      - AIRFLOW__SMTP__SMTP_STARTTLS=True
+      - AIRFLOW__SMTP__SMTP_SSL=False
+      # Fallback/alert env variables used by scripts/alert.py
+      - ALERT_SMTP_HOST=smtp.ethereal.email
+      - ALERT_SMTP_PORT=587
+      - ALERT_SMTP_FROM=bernie.kunze24@ethereal.email
+      - ALERT_SMTP_USE_TLS=True
+      - ALERT_SMTP_USER=bernie.kunze24@ethereal.email
+      - ALERT_SMTP_PASSWORD=jBRt3RYA1VDkev44wf
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: always
+    depends_on:
+      - airflow-webserver
+      - mailhog
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    restart: unless-stopped
