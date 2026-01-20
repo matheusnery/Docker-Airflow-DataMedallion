@@ -217,25 +217,3 @@ docker-compose build --no-cache
 docker-compose up -d
 ```
 
-Segurança e privacidade
-- Não coloque credenciais sensíveis diretamente no repositório. Prefira usar
-  variáveis de ambiente, arquivos `.env` (não commitados) ou os Secrets/Connections
-  do Airflow para armazenar credenciais.
-
-Boas práticas e próximos passos sugeridos
-- Externalizar thresholds e regras DQ para Airflow Variables ou um arquivo de
-  configuração (facilita ajustes sem redeploy).
-- Adicionar alertas por Slack/Teams além do e‑mail (webhooks) para integração com
-  canais de observabilidade.
-- Consolidar logs JSON em uma tabela/Delta para consultas históricas e dashboards.
-
-Se quiser, eu posso:
-- Atualizar `docker-compose.yml` com credenciais SMTP (se você fornecer) e rodar
-  um teste de envio.
-- Alterar `dq.py` para falhar o task quando regras forem violadas (passando
-  `fail_on_error=True`).
-- Consolidar os JSON logs em um dataset (parquet/delta) para análises futuras.
-
-Obrigado — diga qual ação quer que eu execute em seguida (por exemplo: aplicar
-credenciais SMTP e testar entrega para o Hotmail, ou configurar Mailtrap/Ethereal
-para testes).
