@@ -1,10 +1,7 @@
 # Airflow local pipeline (medallion) — instruções e novidades
 
 Este repositório contém uma instância local do Apache Airflow em Docker com uma
-pipeline Medallion (Bronze → Silver → Gold). Este README foi atualizado para
-documentar as novas features implementadas: scripts separados para cada camada,
-logging em JSON, verificação de qualidade de dados (DQ) e um sistema de alertas
-por e‑mail (com MailHog para testes locais e opção de SMTP real).
+pipeline Medallion (Bronze → Silver → Gold).
 
 ## Architecture
 
