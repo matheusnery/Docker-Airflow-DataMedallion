@@ -25,11 +25,11 @@ def _notify_on_failure(context: dict) -> None:
         run_id = context.get("run_id") or (ti.run_id if ti is not None else "")
         log_url = ti.log_url if ti is not None else ""
 
-        subject = f"[Airflow] Falha: {dag_id}.{task_id}"
+        subject = f"[Airflow] Failure: {dag_id}.{task_id}"
         html = f"""
-        <p>Task <b>{task_id}</b> na DAG <b>{dag_id}</b> falhou.</p>
+        <p>Task <b>{task_id}</b> in DAG <b>{dag_id}</b> failed.</p>
         <p>Run id: {run_id}</p>
-        <p><a href=\"{log_url}\">Ver logs no Airflow</a></p>
+        <p><a href=\"{log_url}\">View logs in Airflow</a></p>
         """
 
         # recipient list: change to your real email
@@ -37,7 +37,7 @@ def _notify_on_failure(context: dict) -> None:
     except Exception:
         import logging
 
-        logging.exception("Erro ao enviar e-mail de falha")
+        logging.exception("Error sending failure email")
 
 
 DEFAULT_ARGS = {
@@ -117,22 +117,11 @@ def medallion_pipeline():
 
         return dq_run(silver_path, recipients=recipients, thresholds={})
 
-    @task()
-    def test_alert_task() -> str:
-        """Task de teste para validar o sistema de alertas.
-        
-        Remove esta task após validar que os emails estão sendo enviados.
-        Descomente a linha abaixo para forçar um erro e testar o alerta.
-        """
-        raise Exception("TESTE: Erro intencional para validar sistema de alertas!")
-        return "Alert system test passed"
-
-    # Orquestração: bronze -> silver -> gold
+    # Orchestration: bronze -> silver -> gold
     bronze_path = bronze_task()
     silver_path = silver_task(bronze_path)
     # insert DQ check between silver and gold
     dq_result = dq_check_task(silver_path)
-    test_alert = test_alert_task()
     gold_path = gold_task(silver_path)
 
 

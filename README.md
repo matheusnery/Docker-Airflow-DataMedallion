@@ -1,23 +1,23 @@
 # Airflow local pipeline (medallion)
 
-Este repositório contém uma instância local do Apache Airflow em Docker com uma
-pipeline Medallion (Bronze → Silver → Gold).
+This repository contains a local Apache Airflow instance in Docker with a
+Medallion pipeline (Bronze → Silver → Gold).
 
 ## Architecture
 
-### Blueprint e Components Principais
+### Blueprint and Main Components
 
-A arquitetura segue o padrão **Medallion Architecture** (camadas Bronze → Silver → Gold) com orquestração por Apache Airflow:
+The architecture follows the **Medallion Architecture** pattern (Bronze → Silver → Gold layers) with orchestration by Apache Airflow:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                     Apache Airflow (Docker)                             │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │  medallion_pipeline (DAG)                                        │   │
-│  │  ├─ bronze_task      → Ingestão / API externa (JSON)             │   │
-│  │  ├─ silver_task      → Transformação (Parquet particionado)      │   │
-│  │  ├─ dq_check_task    → Validação de qualidade                    │   │
-│  │  └─ gold_task        → Agregação final (Delta Lake)              │   │
+│  │  ├─ bronze_task      → Ingestion / External API (JSON)           │   │
+│  │  ├─ silver_task      → Transformation (Partitioned Parquet)      │   │
+│  │  ├─ dq_check_task    → Quality validation                        │   │
+│  │  └─ gold_task        → Final aggregation (Delta Lake)            │   │
 │  └──────────────────────────────────────────────────────────────────┘   │
 │                                                                         │
 │  Services: Webserver + Scheduler                                        │
@@ -27,7 +27,7 @@ A arquitetura segue o padrão **Medallion Architecture** (camadas Bronze → Sil
 │                        Data Layers (Local Storage)                      │
 │                                                                         │
 │  📁 /opt/airflow/data/                                                  │
-│  ├─ bronze/           ← JSON raw (Open Brewery DB)                      │
+│  ├─ bronze/           ← Raw JSON (Open Brewery DB)                      │
 │  ├─ silver/           ← Parquet (cleaned, transformed)                  │
 │  ├─ gold_delta/       ← Delta Lake (aggregated, indexed)                │
 │  └─ logging/          ← JSON logs (execution metrics + DQ alerts)       │
@@ -37,56 +37,56 @@ A arquitetura segue o padrão **Medallion Architecture** (camadas Bronze → Sil
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                    Observability & Alerting                             │
 │                                                                         │
-│  📧 Email Alerts (Airflow + SMTP)  → MailHog (local) ou SMTP real      │
-│  📊 JSON Logging                   → Audit trail de execuções          │
-│  🏥 Health Checks                  → Endpoint /health (webserver)      │
+│  📧 Email Alerts (Airflow + SMTP)  → Ethereal Email (testing)          │
+│  📊 JSON Logging                   → Execution audit trail              │
+│  🏥 Health Checks                  → /health endpoint (webserver)       │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Data Flow
 
-1. **Bronze (Ingestão)**
-   - Fetch de dados da API (Open Brewery DB)
-   - Armazenamento como JSON bruto em `/data/bronze/`
+1. **Bronze (Ingestion)**
+   - Fetch data from API (Open Brewery DB)
+   - Store as raw JSON in `/data/bronze/`
    - Naming: `bronze_breweries_<TIMESTAMP>.json`
 
-2. **Silver (Transformação)**
-   - Leitura de arquivos Bronze JSON
-   - Limpeza, validação, casting de tipos
-   - Remoção de duplicatas e valores nulos
-   - Armazenamento particionado em Parquet em `/data/silver/run_<TIMESTAMP>/`
+2. **Silver (Transformation)**
+   - Read Bronze JSON files
+   - Cleaning, validation, type casting
+   - Duplicate and null value removal
+   - Partitioned storage in Parquet at `/data/silver/run_<TIMESTAMP>/`
 
-3. **DQ Check (Validação)**
-   - Avaliação de regras (contagem de registros, valores nulos, ranges)
-   - Geração de logs JSON com métricas
-   - Trigger de alertas via e‑mail se violações encontradas
+3. **DQ Check (Validation)**
+   - Evaluate rules (record count, null values, ranges)
+   - Generate JSON logs with metrics
+   - Trigger email alerts if violations are found
 
-4. **Gold (Agregação)**
-   - Leitura de dados Silver
-   - Agregações: contagem por estado, tipo de cervejaria, etc.
-   - Tentativa de escrita em Delta Lake (`/data/gold_delta/`)
-   - Fallback para Parquet se Delta indisponível
+4. **Gold (Aggregation)**
+   - Read Silver data
+   - Aggregations: count by state, brewery type, etc.
+   - Attempt to write to Delta Lake (`/data/gold_delta/`)
+   - Fallback to Parquet if Delta is unavailable
 
 ### Technology Stack
 
-| Componente | Tecnologia |
+| Component | Technology |
 |-----------|-----------|
-| **Orquestração** | Apache Airflow 2.8.0 |
+| **Orchestration** | Apache Airflow 2.8.0 |
 | **Python** | 3.11 |
 | **Storage** | Local (Parquet, JSON, Delta Lake) |
 | **Pipeline Type** | Batch (scheduled) |
-| **Logging** | JSON custom + Airflow logs |
-| **Alertas** | SMTP (MailHog/Real) + Airflow email op |
-| **Containerização** | Docker + Docker Compose |
+| **Logging** | Custom JSON + Airflow logs |
+| **Alerts** | SMTP (MailHog/Real) + Airflow email op |
+| **Containerization** | Docker + Docker Compose |
 
-### Estrutura de Pastas
+### Folder Structure
 
 ```
 airflow_home/
 ├─ dags/
-│  ├─ medallion_pipeline_dag.py     (DAG principal)
-│  └─ scripts/                      (lógica separada por camada)
+│  ├─ medallion_pipeline_dag.py     (Main DAG)
+│  └─ scripts/                      (Logic separated by layer)
 │     ├─ bronze.py
 │     ├─ silver.py
 │     ├─ gold.py
@@ -94,120 +94,110 @@ airflow_home/
 │     ├─ logging.py
 │     └─ alert.py
 ├─ data/
-│  ├─ bronze/                       (JSON bruto)
-│  ├─ silver/                       (Parquet transformado)
+│  ├─ bronze/                       (Raw JSON)
+│  ├─ silver/                       (Transformed Parquet)
 │  ├─ gold_delta/                   (Delta Lake)
 │  └─ logging/                      (JSON logs)
 └─ logs/                            (Airflow task logs)
 
-config/                             (Configurações customizadas)
-plugins/                            (Plugins Airflow customizados)
+config/                             (Custom configurations)
+plugins/                            (Custom Airflow plugins)
 ```
 
-Resumo rápido
-- Orquestração: Airflow (webserver + scheduler) via `docker-compose`.
+Quick Summary
+- Orchestration: Airflow (webserver + scheduler) via `docker-compose`.
 - Pipeline: `medallion_pipeline` (tasks: bronze_task, silver_task, dq_check_task, gold_task).
-- Scripts: implementações extraídas para `airflow_home/dags/scripts/` - `bronze.py`,
+- Scripts: implementations extracted to `airflow_home/dags/scripts/` - `bronze.py`,
   `silver.py`, `gold.py`, `logging.py`, `dq.py`, `alert.py`.
-- Logging: eventos de execução e métricas DQ escritos como JSON em
-  `/opt/airflow/data/logging` (um arquivo JSON por evento).
-- Alertas: envio de e‑mail em caso de falhas/DQ via Airflow `send_email` com
-  fallback por `smtplib`. Para testes locais, MailHog está integrado ao
-  `docker-compose`.
+- Logging: execution events and DQ metrics written as JSON in
+  `/opt/airflow/data/logging` (one JSON file per event).
+- Alerts: email sending in case of failures/DQ via Airflow `send_email` using
+  Ethereal Email for testing (configured in docker-compose.yml).
 
-Arquivos principais criados/alterados
-- `airflow_home/dags/medallion_pipeline_dag.py` - DAG que delega lógica aos scripts.
-- `airflow_home/dags/scripts/bronze.py` - fetch e gravação Bronze (JSON).
-- `airflow_home/dags/scripts/silver.py` - transformação Silver (Parquet particionado).
-- `airflow_home/dags/scripts/gold.py` - agregação Gold e tentativa de escrita Delta.
-- `airflow_home/dags/scripts/logging.py` - helper para gravar eventos JSON em
+Main created/modified files
+- `airflow_home/dags/medallion_pipeline_dag.py` - DAG that delegates logic to scripts.
+- `airflow_home/dags/scripts/bronze.py` - fetch and Bronze writing (JSON).
+- `airflow_home/dags/scripts/silver.py` - Silver transformation (partitioned Parquet).
+- `airflow_home/dags/scripts/gold.py` - Gold aggregation and Delta write attempt.
+- `airflow_home/dags/scripts/logging.py` - helper to write JSON events in
   `/opt/airflow/data/logging`.
-- `airflow_home/dags/scripts/dq.py` - avaliador de regras de qualidade e gerador
-  de alertas.
-- `airflow_home/dags/scripts/alert.py` - helper de envio de e‑mail (Airflow + SMTP
-  fallback).
-- `docker-compose.yml` - adicionado serviço `mailhog` e variáveis SMTP de exemplo.
+- `airflow_home/dags/scripts/dq.py` - quality rules evaluator and alert
+  generator.
+- `airflow_home/dags/scripts/alert.py` - email sending helper using Airflow's
+  built-in SMTP.
+- `docker-compose.yml` - configured with Ethereal Email SMTP for testing.
 
-Como rodar (modo rápido)
-1. Subir os containers:
+How to run (quick mode)
+1. Start the containers:
 
 ```powershell
 docker-compose up -d
 ```
 
-2. Acesse a UI do Airflow: http://localhost:8080
-3. Para ver as mensagens capturadas pelo MailHog (teste local):
-   - UI MailHog: http://localhost:8025
-   - API MailHog: http://localhost:8025/api/v2/messages
+2. Access Airflow UI: http://localhost:8080
+3. Check email alerts at Ethereal Email viewer (check your credentials)
 
-Testes manuais úteis (PowerShell)
-- Listar DAGs:
+Useful manual tests (PowerShell)
+- List DAGs:
 
 ```powershell
 docker-compose run --rm airflow-webserver airflow dags list
 ```
 
-- Executar tasks isoladas (útil para debug):
+- Run isolated tasks (useful for debugging):
 
 ```powershell
-# executar bronze (gera /opt/airflow/data/bronze/*.json)
+# run bronze (generates /opt/airflow/data/bronze/*.json)
 docker-compose run --rm airflow-webserver airflow tasks test medallion_pipeline bronze_task 2026-01-18
 
-# executar silver (gera /opt/airflow/data/silver/run_<timestamp>)
+# run silver (generates /opt/airflow/data/silver/run_<timestamp>)
 docker-compose run --rm airflow-webserver airflow tasks test medallion_pipeline silver_task 2026-01-18
 
-# executar dq_check (avaliador de qualidade e envio de alerta se necessário)
+# run dq_check (quality evaluator and alert sending if needed)
 docker-compose run --rm airflow-webserver airflow tasks test medallion_pipeline dq_check_task 2026-01-18
 
-# executar gold
+# run gold
 docker-compose run --rm airflow-webserver airflow tasks test medallion_pipeline gold_task 2026-01-18
 ```
 
-Observação: ao usar `airflow tasks test` na task `dq_check_task` sem fornecer
-`silver_path`, o checker pode não localizar o log correto, o fluxo end‑to‑end
-(bronze → silver → dq_check) em uma mesma execução é a forma mais realista de
-testar.
+Note: when using `airflow tasks test` on the `dq_check_task` task without providing
+`silver_path`, the checker may not locate the correct log. The end-to-end flow
+(bronze → silver → dq_check) in the same execution is the most realistic way to
+test.
 
-Configuração de SMTP (para enviar e‑mails a caixas reais)
+SMTP Configuration (to send emails to real inboxes)
 
-Por padrão este repositório está configurado para usar MailHog (local) para
-testes. Para enviar e‑mails para contas reais (Hotmail, Gmail, etc.) você deve
-fornecer credenciais SMTP de um provedor confiável (SendGrid, Mailgun, SES,
-ou SMTP do seu domínio). Existem duas opções:
+By default this repository is configured to use Ethereal Email for
+testing. To send emails to real accounts (Hotmail, Gmail, etc.) you must
+provide SMTP credentials from a trusted provider (SendGrid, Mailgun, SES,
+or your domain's SMTP). There are two options:
 
-1) Usar um serviço de envio (recomendado)
-   - Crie/obtenha credenciais no provedor (ex.: SendGrid API key ou Mailgun SMTP).
-   - Atualize `docker-compose.yml` nas seções `airflow-webserver` e
-     `airflow-scheduler` com as variáveis abaixo (exemplo SendGrid):
+1) Use a sending service (recommended)
+   - Create/obtain credentials from the provider (e.g., SendGrid API key or Mailgun SMTP).
+   - Update `docker-compose.yml` in the `airflow-webserver` and
+     `airflow-scheduler` sections with the variables below (SendGrid example):
 
 ```yaml
 environment:
   - AIRFLOW__SMTP__SMTP_HOST=smtp.sendgrid.net
   - AIRFLOW__SMTP__SMTP_PORT=587
-  - AIRFLOW__SMTP__SMTP_MAIL_FROM=no-reply@seudominio.com
+  - AIRFLOW__SMTP__SMTP_MAIL_FROM=no-reply@yourdomain.com
   - AIRFLOW__SMTP__SMTP_USER=apikey
-  - AIRFLOW__SMTP__SMTP_PASSWORD=<SUA_SENDGRID_API_KEY>
+  - AIRFLOW__SMTP__SMTP_PASSWORD=<YOUR_SENDGRID_API_KEY>
   - AIRFLOW__SMTP__SMTP_STARTTLS=True
   - AIRFLOW__SMTP__SMTP_SSL=False
-
-  # fallback usado por scripts/alert.py (opcional)
-  - ALERT_SMTP_HOST=smtp.sendgrid.net
-  - ALERT_SMTP_PORT=587
-  - ALERT_SMTP_USER=apikey
-  - ALERT_SMTP_PASSWORD=<SUA_SENDGRID_API_KEY>
-  - ALERT_SMTP_FROM=no-reply@seudominio.com
-  - ALERT_SMTP_USE_TLS=True
 ```
 
-2) Usar um serviço de inbox de testes (Mailtrap, Ethereal)
-   - Crie conta no serviço, obtenha credenciais SMTP e use no compose como
-     acima. Esses serviços não entregam à internet, mas permitem ver a mensagem
-     em uma inbox web (útil para validação sem afetar destinatários reais).
+2) Use a test inbox service (Mailtrap, Ethereal)
+   - Already configured with Ethereal Email. View messages at https://ethereal.email
+   - Or create account on another service, obtain SMTP credentials and update docker-compose.yml
+     as shown above. These services don't deliver to the internet, but allow you to see the message
+     in a web inbox (useful for validation without affecting real recipients).
 
-Rebuild / dependências
-- Se você pretende usar Delta Lake (`deltalake`) ou manipular Parquet com
-  `pandas`/`pyarrow` dentro do container, certifique-se de que `requirements.txt`
-  contém as dependências necessárias e reconstrua a imagem:
+Rebuild / dependencies
+- If you plan to use Delta Lake (`deltalake`) or manipulate Parquet with
+  `pandas`/`pyarrow` inside the container, make sure `requirements.txt`
+  contains the necessary dependencies and rebuild the image:
 
 ```powershell
 docker-compose build --no-cache

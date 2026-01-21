@@ -26,6 +26,8 @@ wheels/
 # Airflow
 airflow.db
 airflow.cfg
+airflow_home/airflow-webserver.pid
+airflow_home/airflow-scheduler.pid
 logs/
 *.log
 
