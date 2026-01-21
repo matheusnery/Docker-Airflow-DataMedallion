@@ -52,12 +52,12 @@ DEFAULT_ARGS = {
 
 
 @dag(
-        dag_id="medallion_pipeline", 
-        start_date=days_ago(1), 
-        schedule_interval=timedelta(days=1), 
-        default_args=DEFAULT_ARGS, 
-        catchup=False
-        )
+    dag_id="medallion_pipeline", 
+    start_date=days_ago(1), 
+    schedule_interval=timedelta(days=1), 
+    default_args=DEFAULT_ARGS, 
+    catchup=False
+    )
 def medallion_pipeline():
     """Simple medallion pipeline: bronze -> silver -> gold.
 

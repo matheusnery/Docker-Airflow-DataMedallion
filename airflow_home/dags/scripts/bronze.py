@@ -28,8 +28,7 @@ def run(per_page: int = 50, max_pages: int = 5) -> str:
     """
     # prefer the v1 path, fallback to /breweries
     endpoints = [
-        "https://api.openbrewerydb.org/v1/breweries",
-        "https://api.openbrewerydb.org/breweries",
+        "https://api.openbrewerydb.org/v1/breweries"
     ]
 
     items: List[Dict[str, Any]] = []

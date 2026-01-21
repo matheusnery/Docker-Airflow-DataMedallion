@@ -1,9 +1,3 @@
-"""Gold script: aggregate silver dataset and write Delta (or warn on failure).
-
-Provides `run(silver_path) -> str` which writes an aggregated table partitioned by
-run_date. Uses `deltalake` if available; otherwise logs a warning and returns the
-intended delta root path.
-"""
 from __future__ import annotations
 
 import json

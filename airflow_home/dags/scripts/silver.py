@@ -1,7 +1,3 @@
-"""Silver script: normalize bronze JSON into a partitioned parquet dataset.
-
-Provides `run(bronze_path) -> str` which returns the dataset root for the run.
-"""
 from __future__ import annotations
 
 import json

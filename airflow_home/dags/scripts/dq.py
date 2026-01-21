@@ -1,13 +1,3 @@
-"""Data-quality checker: evaluate silver metrics and send alerts when rules fail.
-
-Provides a `run` function intended to be called from an Airflow task. It looks
-for the JSON log emitted by the `silver` stage that references the given
-`silver_path`, evaluates a set of rules, and sends email alerts if thresholds
-are exceeded.
-
-Default policy: send alert but do not raise an exception (won't fail the DAG).
-You can set `fail_on_error=True` to raise an exception instead.
-"""
 from __future__ import annotations
 
 import json
@@ -74,11 +64,11 @@ def _evaluate_rules(metrics: Dict[str, Any], thresholds: Dict[str, Any]) -> List
 
 
 def run(
-    silver_path: str,
-    recipients: Optional[List[str]] = None,
-    thresholds: Optional[Dict[str, Any]] = None,
-    fail_on_error: bool = False,
-) -> Dict[str, Any]:
+        silver_path: str,
+        recipients: Optional[List[str]] = None,
+        thresholds: Optional[Dict[str, Any]] = None,
+        fail_on_error: bool = False,
+        ) -> Dict[str, Any]:
     """Run data-quality checks for the given silver_path.
 
     - recipients: list of emails to notify (if None, uses DEFAULT from env or Airflow DEFAULT_ARGS)

@@ -1,8 +1,3 @@
-"""Alert helper: send alerts via Airflow email.
-
-This module provides a simple `send_email` function that uses
-Airflow's built-in email functionality with the configured SMTP settings.
-"""
 from __future__ import annotations
 
 from typing import Sequence
