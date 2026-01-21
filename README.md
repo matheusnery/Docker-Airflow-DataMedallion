@@ -77,7 +77,7 @@ The architecture follows the **Medallion Architecture** pattern (Bronze → Silv
 | **Storage** | Local (Parquet, JSON, Delta Lake) |
 | **Pipeline Type** | Batch (scheduled) |
 | **Logging** | Custom JSON + Airflow logs |
-| **Alerts** | SMTP (MailHog/Real) + Airflow email op |
+| **Alerts** | Ethereal Email (testing) + Airflow SMTP |
 | **Containerization** | Docker + Docker Compose |
 
 ### Folder Structure
@@ -135,7 +135,26 @@ docker-compose up -d
 ```
 
 2. Access Airflow UI: http://localhost:8080
-3. Check email alerts at Ethereal Email viewer (check your credentials)
+
+### Testing Email Alerts
+
+To validate the email alert system, run the test task that intentionally fails:
+
+```powershell
+docker-compose run --rm airflow-webserver airflow tasks test medallion_pipeline test_email_alert_task 2026-01-21
+```
+
+**Check emails at Ethereal:**
+- URL: https://ethereal.email/messages
+- User: `bernie.kunze24@ethereal.email`
+- Password: `jBRt3RYA1VDkev44wf`
+
+You should see an email with subject: `[Airflow] Failure: medallion_pipeline.test_email_alert_task`
+
+**After validation**, comment out this line in `medallion_pipeline_dag.py`:
+```python
+# test_alert = test_email_alert_task()
+```
 
 Useful manual tests (PowerShell)
 - List DAGs:
@@ -158,6 +177,9 @@ docker-compose run --rm airflow-webserver airflow tasks test medallion_pipeline 
 
 # run gold
 docker-compose run --rm airflow-webserver airflow tasks test medallion_pipeline gold_task 2026-01-18
+
+# test email alerts (intentionally fails)
+docker-compose run --rm airflow-webserver airflow tasks test medallion_pipeline test_email_alert_task 2026-01-21
 ```
 
 Note: when using `airflow tasks test` on the `dq_check_task` task without providing
@@ -165,17 +187,9 @@ Note: when using `airflow tasks test` on the `dq_check_task` task without provid
 (bronze → silver → dq_check) in the same execution is the most realistic way to
 test.
 
-SMTP Configuration (to send emails to real inboxes)
+## SMTP Configuration
 
-By default this repository is configured to use Ethereal Email for
-testing. To send emails to real accounts (Hotmail, Gmail, etc.) you must
-provide SMTP credentials from a trusted provider (SendGrid, Mailgun, SES,
-or your domain's SMTP). There are two options:
-
-1) Use a sending service (recommended)
-   - Create/obtain credentials from the provider (e.g., SendGrid API key or Mailgun SMTP).
-   - Update `docker-compose.yml` in the `airflow-webserver` and
-     `airflow-scheduler` sections with the variables below (SendGrid example):
+**Default (Testing):** Ethereal Email is configured for safe testing without sending real emails.
 
 ```yaml
 environment:
@@ -188,19 +202,32 @@ environment:
   - AIRFLOW__SMTP__SMTP_SSL=False
 ```
 
-2) Use a test inbox service (Mailtrap, Ethereal)
-   - Already configured with Ethereal Email. View messages at https://ethereal.email
-   - Or create account on another service, obtain SMTP credentials and update docker-compose.yml
-     as shown above. These services don't deliver to the internet, but allow you to see the message
-     in a web inbox (useful for validation without affecting real recipients).
+## CI/CD Pipeline
 
-Rebuild / dependencies
-- If you plan to use Delta Lake (`deltalake`) or manipulate Parquet with
-  `pandas`/`pyarrow` inside the container, make sure `requirements.txt`
-  contains the necessary dependencies and rebuild the image:
+### Continuous Integration (CI)
 
-```powershell
-docker-compose build --no-cache
-docker-compose up -d
-```
+The project includes a CI pipeline configured via **GitHub Actions** (`.github/workflows/airflow-ci.yml`):
+
+**Trigger:** Automatically executed on push or pull request to the `main` branch.
+
+**Steps:**
+1. **Checkout** the code
+2. **Setup Docker Buildx** for optimized builds
+3. **Start Airflow** via `docker compose up -d`
+4. **Health check** of containers
+5. **Teardown** the test environment
+
+The pipeline ensures that the Airflow stack starts correctly and all services are operational before integrating changes.
+
+### Continuous Deployment (CD)
+
+**Status:** CD implementation is yet to be defined.
+
+Planned next steps:
+- Automated deployment to staging/production environments
+- End-to-end integration tests
+- Automatic rollback on failures
+- Conditional deployment based on tags/releases
+
+
 

@@ -117,12 +117,26 @@ def medallion_pipeline():
 
         return dq_run(silver_path, recipients=recipients, thresholds={})
 
+    @task()
+    def test_email_alert_task() -> str:
+        """Test task to validate email alert system.
+        
+        This task intentionally fails to test that email alerts are working.
+        Check your email at https://ethereal.email/messages to see the alert.
+        
+        To disable this test, comment out or remove this task and its call below.
+        """
+        raise Exception("TEST: Intentional error to validate email alert system!")
+
     # Orchestration: bronze -> silver -> gold
     bronze_path = bronze_task()
     silver_path = silver_task(bronze_path)
     # insert DQ check between silver and gold
     dq_result = dq_check_task(silver_path)
     gold_path = gold_task(silver_path)
+    
+    # Test email alerts (comment out after validation)
+    test_alert = test_email_alert_task()
 
 
     return {}
